@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Claude × Higgsfield × After Effects</title>
+<style>
+  :root{
+    --bg:#0a0a12; --ink:#f2f2f7; --muted:#9aa0b5;
+    --c1:#7c4dff; --c2:#ff4d9d; --c3:#00e5ff; --c4:#ffd23f; --c5:#3dffb0;
+    --glass:rgba(255,255,255,.06); --stroke:rgba(255,255,255,.12);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    background:var(--bg); color:var(--ink); overflow:hidden;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  /* animated aurora */
+  .aurora{position:fixed;inset:-30%;z-index:0;filter:blur(70px);opacity:.55;pointer-events:none}
+  .aurora i{position:absolute;border-radius:50%;mix-blend-mode:screen;animation:float 18s ease-in-out infinite}
+  .aurora i:nth-child(1){width:50vw;height:50vw;background:var(--c1);top:5%;left:0%;animation-delay:0s}
+  .aurora i:nth-child(2){width:45vw;height:45vw;background:var(--c2);top:30%;right:0%;animation-delay:-4s}
+  .aurora i:nth-child(3){width:40vw;height:40vw;background:var(--c3);bottom:0%;left:25%;animation-delay:-8s}
+  .aurora i:nth-child(4){width:35vw;height:35vw;background:var(--c5);top:0%;right:25%;animation-delay:-12s}
+  @keyframes float{0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(6%,8%) scale(1.15)}66%{transform:translate(-6%,-4%) scale(.9)}}
+
+  .deck{position:relative;z-index:1;height:100%;width:100%}
+  .slide{
+    position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;
+    padding:6vh 9vw;opacity:0;transform:translateY(24px) scale(.99);
+    transition:opacity .5s ease, transform .5s ease;pointer-events:none;
+  }
+  .slide.active{opacity:1;transform:none;pointer-events:auto}
+  .kicker{display:inline-flex;align-items:center;gap:.5rem;font-size:.8rem;letter-spacing:.22em;
+    text-transform:uppercase;color:var(--muted);margin-bottom:1.1rem}
+  .kicker b{color:var(--c3);font-weight:700}
+  h1{font-size:clamp(2.4rem,6.5vw,5rem);line-height:1.02;font-weight:800;letter-spacing:-.02em}
+  h2{font-size:clamp(1.8rem,4.2vw,3.1rem);line-height:1.08;font-weight:800;letter-spacing:-.01em;margin-bottom:1.4rem}
+  .grad{background:linear-gradient(100deg,var(--c1),var(--c2) 40%,var(--c3) 75%,var(--c5));
+    -webkit-background-clip:text;background-clip:text;color:transparent}
+  p.lead{font-size:clamp(1.05rem,2.1vw,1.5rem);color:var(--muted);max-width:48ch;line-height:1.5;margin-top:1.2rem}
+  .pill{display:inline-block;padding:.5rem 1rem;border:1px solid var(--stroke);border-radius:999px;
+    background:var(--glass);font-size:.95rem;color:var(--ink)}
+
+  .cols{display:grid;grid-template-columns:repeat(3,1fr);gap:1.1rem;margin-top:1.6rem}
+  .card{background:var(--glass);border:1px solid var(--stroke);border-radius:18px;padding:1.4rem 1.3rem;
+    backdrop-filter:blur(8px)}
+  .card .ico{font-size:2rem}
+  .card h3{font-size:1.15rem;margin:.6rem 0 .35rem}
+  .card p{color:var(--muted);font-size:.95rem;line-height:1.45}
+
+  .flow{display:flex;align-items:center;gap:1.1rem;margin-top:2rem;flex-wrap:wrap}
+  .node{flex:1;min-width:170px;text-align:center;background:var(--glass);border:1px solid var(--stroke);
+    border-radius:18px;padding:1.5rem 1rem}
+  .node .ico{font-size:2.4rem}
+  .node h3{margin-top:.5rem;font-size:1.2rem}
+  .node p{color:var(--muted);font-size:.85rem;margin-top:.3rem}
+  .arrow{font-size:1.8rem;color:var(--c3);flex:0 0 auto}
+
+  .showcase{display:grid;grid-template-columns:1.1fr .9fr;gap:2.4rem;align-items:center;margin-top:1rem}
+  .media{border-radius:20px;overflow:hidden;border:1px solid var(--stroke);
+    box-shadow:0 30px 80px rgba(0,0,0,.5);background:#000;max-height:64vh}
+  .media img,.media video{width:100%;height:100%;object-fit:contain;display:block;max-height:64vh}
+  .checker{background:
+    linear-gradient(45deg,#1a1a22 25%,transparent 25%),
+    linear-gradient(-45deg,#1a1a22 25%,transparent 25%),
+    linear-gradient(45deg,transparent 75%,#1a1a22 75%),
+    linear-gradient(-45deg,transparent 75%,#1a1a22 75%);
+    background-size:26px 26px;background-position:0 0,0 13px,13px -13px,-13px 0}
+  .steplist{list-style:none}
+  .steplist li{display:flex;gap:.8rem;align-items:flex-start;padding:.55rem 0;font-size:1.08rem;border-bottom:1px solid rgba(255,255,255,.06)}
+  .steplist li .n{color:var(--c3);font-weight:800;min-width:1.4rem}
+  .steplist li.done .n::after{content:" ✓"}
+  .tag{font-size:.78rem;color:var(--muted);border:1px solid var(--stroke);padding:.15rem .55rem;border-radius:999px;margin-left:auto;white-space:nowrap}
+
+  .grid2{display:grid;grid-template-columns:repeat(2,1fr);gap:1rem;margin-top:1.4rem}
+  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-top:1.4rem}
+  .mini{background:var(--glass);border:1px solid var(--stroke);border-radius:14px;padding:1rem 1.1rem}
+  .mini b{display:block;font-size:1rem;margin-bottom:.2rem}
+  .mini span{color:var(--muted);font-size:.88rem;line-height:1.4}
+  .gallery{display:grid;grid-template-columns:repeat(4,1fr);gap:.9rem;margin-top:1.6rem}
+  .gallery figure{border-radius:14px;overflow:hidden;border:1px solid var(--stroke);background:#000;aspect-ratio:1/1}
+  .gallery img,.gallery video{width:100%;height:100%;object-fit:cover}
+  .gallery figcaption{font-size:.72rem;color:var(--muted);padding:.4rem .55rem;background:rgba(0,0,0,.4)}
+
+  .benefit{background:linear-gradient(120deg,rgba(124,77,255,.18),rgba(0,229,255,.12));
+    border:1px solid var(--stroke);border-radius:22px;padding:2rem;margin-top:1.4rem}
+  .benefit h3{font-size:1.5rem;margin-bottom:.6rem}
+  .benefit p{color:#dfe2f0;font-size:1.1rem;line-height:1.55}
+
+  /* chrome */
+  .progress{position:fixed;top:0;left:0;height:3px;background:linear-gradient(90deg,var(--c1),var(--c2),var(--c3));z-index:5;transition:width .4s ease}
+  .hud{position:fixed;bottom:22px;left:0;right:0;display:flex;align-items:center;justify-content:center;gap:14px;z-index:5}
+  .dots{display:flex;gap:8px}
+  .dots b{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.22);cursor:pointer;transition:.3s}
+  .dots b.on{background:var(--c3);transform:scale(1.4)}
+  .count{position:fixed;bottom:18px;right:26px;color:var(--muted);font-size:.85rem;z-index:5;font-variant-numeric:tabular-nums}
+  .hint{position:fixed;bottom:18px;left:26px;color:var(--muted);font-size:.85rem;z-index:5}
+  .key{display:inline-block;border:1px solid var(--stroke);border-radius:6px;padding:.05rem .5rem;background:var(--glass);font-size:.8rem}
+  .brand{position:fixed;top:20px;left:26px;z-index:5;font-size:.8rem;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="aurora"><i></i><i></i><i></i><i></i></div>
+<div class="progress" id="prog"></div>
+<div class="brand">⬡ Claude · Higgsfield · After Effects</div>
+
+<div class="deck" id="deck">
+
+  <!-- 1 TITLE -->
+  <section class="slide">
+    <div class="kicker"><b>●</b> A Live Proof of Concept</div>
+    <h1>One conversation.<br><span class="grad">Generative AI → Motion graphics.</span></h1>
+    <p class="lead">Claude orchestrates <b style="color:#fff">Higgsfield</b> (AI image / video / audio) and drops the results straight into <b style="color:#fff">After Effects</b> — images, green-screen video, even music — without you ever leaving the chat.</p>
+    <div style="margin-top:2rem"><span class="pill">Press <span class="key">Space</span> to begin →</span></div>
+  </section>
+
+  <!-- 2 THE FRICTION -->
+  <section class="slide">
+    <div class="kicker">The old way</div>
+    <h2>The workflow <span class="grad">used to be glued together by hand</span></h2>
+    <div class="cols">
+      <div class="card"><div class="ico">🌐</div><h3>Tab juggling</h3><p>Open the Higgsfield site, type a prompt, wait, download a file, find it, drag it into AE — for every single asset.</p></div>
+      <div class="card"><div class="ico">🔁</div><h3>Repeat × N</h3><p>Background, character, overlay, video, audio… each one a manual round-trip. Iteration is slow and breaks your flow.</p></div>
+      <div class="card"><div class="ico">🧩</div><h3>Disconnected tools</h3><p>The AI lives in a browser. The comp lives in AE. Nothing talks to each other.</p></div>
+    </div>
+  </section>
+
+  <!-- 3 THE BREAKTHROUGH / BENEFIT -->
+  <section class="slide">
+    <div class="kicker"><b>★</b> The whole point</div>
+    <h2>A <span class="grad">seamless connection</span> from Higgsfield → After Effects, via Claude</h2>
+    <div class="benefit">
+      <h3>💬 You describe it. It appears in your comp.</h3>
+      <p>Claude calls the Higgsfield CLI to generate the asset, downloads it, and imports + positions it inside your live After Effects project automatically. No browser, no file hunting, no manual import — the AI factory and the editing canvas become <b>one continuous pipeline</b> driven by plain language.</p>
+    </div>
+  </section>
+
+  <!-- 4 THE STACK -->
+  <section class="slide">
+    <div class="kicker">How it fits together</div>
+    <h2>Three tools, <span class="grad">one brain</span></h2>
+    <div class="flow">
+      <div class="node"><div class="ico">🧠</div><h3>Claude</h3><p>The orchestrator — reasons, prompts, runs commands, scripts AE</p></div>
+      <div class="arrow">→</div>
+      <div class="node"><div class="ico">🎨</div><h3>Higgsfield</h3><p>AI factory — images, video & audio from a prompt</p></div>
+      <div class="arrow">→</div>
+      <div class="node"><div class="ico">🎬</div><h3>After Effects</h3><p>The canvas — assets land in your comp, ready to composite</p></div>
+    </div>
+    <p class="lead">A lightweight bridge lets Claude run ExtendScript inside AE — so importing, scaling, layering and keying all happen programmatically.</p>
+  </section>
+
+  <!-- 5 POC OVERVIEW -->
+  <section class="slide">
+    <div class="kicker">What we built — live, today</div>
+    <h2>A “smurf tripping on a mushroom” scene, <span class="grad">100% AI-generated</span></h2>
+    <ul class="steplist">
+      <li class="done"><span class="n">1</span><div>3D mushroom modelled in Blender → exported → imported to AE</div><span class="tag">Blender → AE</span></li>
+      <li class="done"><span class="n">2</span><div>Dreamy forest <b>background</b> generated &amp; placed behind it</div><span class="tag">HF image</span></li>
+      <li class="done"><span class="n">3</span><div>Blue <b>character</b> on green screen, dropped into the comp</div><span class="tag">HF image</span></li>
+      <li class="done"><span class="n">4</span><div>Psychedelic <b>overlay</b> (green-screen) layered on top</div><span class="tag">HF image</span></li>
+      <li class="done"><span class="n">5</span><div>That overlay <b>animated into video</b> &amp; auto-looped in AE</div><span class="tag">HF video</span></li>
+      <li class="done"><span class="n">6</span><div>15s of full-on <b>psytrance</b> generated &amp; added as audio</div><span class="tag">HF audio</span></li>
+    </ul>
+    <p class="lead">Everything below is the real output — embedded straight from this session.</p>
+  </section>
+
+  <!-- 6 MUSHROOM -->
+  <section class="slide">
+    <div class="kicker">Step 1 · Blender → After Effects</div>
+    <div class="showcase">
+      <div class="media"><img src="mushroom_render.png" alt="mushroom"></div>
+      <div>
+        <h2>The 3D <span class="grad">mushroom</span></h2>
+        <p class="lead">Modelled, shaded and lit in Blender by Claude, exported to GLB, and imported into AE as a native 3D layer with the Advanced 3D renderer.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 7 BACKGROUND -->
+  <section class="slide">
+    <div class="kicker">Step 2 · Higgsfield image</div>
+    <div class="showcase">
+      <div class="media"><img src="bg_forest.png" alt="forest"></div>
+      <div>
+        <h2>AI <span class="grad">background</span></h2>
+        <p class="lead">A dreamy enchanted forest, generated from a text prompt with Soul V2 at 16:9 to match the comp — auto-scaled and placed as the bottom layer.</p>
+        <div style="margin-top:1rem"><span class="pill">~0.12 credits</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 8 SMURF -->
+  <section class="slide">
+    <div class="kicker">Step 3 · Higgsfield image · green screen</div>
+    <div class="showcase">
+      <div class="media checker"><img src="smurf_green.png" alt="character"></div>
+      <div>
+        <h2>The <span class="grad">character</span></h2>
+        <p class="lead">A blue cartoon gnome generated on a chroma-green backdrop — imported on top, sized to stand in the scene, ready to key with Keylight.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 9 PSYCHEDELIC -->
+  <section class="slide">
+    <div class="kicker">Step 4 · Higgsfield image · green screen</div>
+    <div class="showcase">
+      <div class="media checker"><img src="psychedelic_green.png" alt="psychedelic"></div>
+      <div>
+        <h2>Psychedelic <span class="grad">overlay</span></h2>
+        <p class="lead">Trippy swirls, melting drips and an eyeball — prompted to avoid green so it survives the key, ready as a Screen-blended hallucination layer.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 10 VIDEO -->
+  <section class="slide">
+    <div class="kicker">Step 5 · Higgsfield video</div>
+    <div class="showcase">
+      <div class="media"><video src="psychedelic_warble.mp4" autoplay loop muted playsinline></video></div>
+      <div>
+        <h2>…now it <span class="grad">moves</span></h2>
+        <p class="lead">The still overlay was fed to an image-to-video model and brought to life — warbling, rippling motion — then auto-looped across the comp via Time Remap.</p>
+        <div style="margin-top:1rem"><span class="pill">image → video, in one step</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 11 AUDIO -->
+  <section class="slide">
+    <div class="kicker">Step 6 · Higgsfield audio</div>
+    <h2>And it has a <span class="grad">soundtrack</span> 🎵</h2>
+    <p class="lead">15 seconds of full-on psytrance — 145 BPM, acid leads, rolling bass — generated from a prompt and dropped onto the audio track. <b>Play it:</b></p>
+    <div style="margin-top:1.6rem;max-width:560px">
+      <audio src="psytrance.m4a" controls style="width:100%"></audio>
+    </div>
+    <div style="margin-top:1.2rem"><span class="pill">~0.94 credits · text → music</span></div>
+  </section>
+
+  <!-- 12 GALLERY / RECAP -->
+  <section class="slide">
+    <div class="kicker">The assembled comp</div>
+    <h2>Six AI assets, <span class="grad">one timeline</span></h2>
+    <div class="gallery">
+      <figure><img src="bg_forest.png"><figcaption>Background · image</figcaption></figure>
+      <figure><img src="smurf_green.png"><figcaption>Character · image</figcaption></figure>
+      <figure><img src="psychedelic_green.png"><figcaption>Overlay · image</figcaption></figure>
+      <figure><video src="psychedelic_warble.mp4" autoplay loop muted playsinline></video><figcaption>Warble · video</figcaption></figure>
+    </div>
+    <p class="lead">The entire proof of concept — images, video and music — cost roughly <b style="color:#fff">~5 credits</b> total.</p>
+  </section>
+
+  <!-- 12b TIMELAPSE -->
+  <section class="slide">
+    <div class="kicker">Behind the scenes</div>
+    <div class="showcase">
+      <div class="media"><video src="https://github.com/mickeyperry/claude-higgsfield-ae-demo/releases/download/v1/timelapse.mp4" autoplay loop muted playsinline></video></div>
+      <div>
+        <h2>The whole build, <span class="grad">sped up</span> ⏱️</h2>
+        <p class="lead">From an empty comp to the finished tripping-smurf scene — every generation, import and key, captured as a timelapse of the real session.</p>
+        <div style="margin-top:1rem"><span class="pill">Claude driving Higgsfield → AE, live</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 12c FINAL RESULT -->
+  <section class="slide">
+    <div class="kicker"><b>★</b> The payoff</div>
+    <h2>The final <span class="grad">result</span> 🍄👁️🎵</h2>
+    <p class="lead">Background, character, psychedelic warble and psytrance — all AI-generated, composited in After Effects. <b>Press play:</b></p>
+    <div style="margin-top:1.2rem" class="media" id="finalwrap">
+      <video src="result.mp4" controls playsinline style="max-height:60vh"></video>
+    </div>
+  </section>
+
+  <!-- 13 WHAT WE HAVEN'T DONE -->
+  <section class="slide">
+    <div class="kicker">The runway ahead</div>
+    <h2>What we <span class="grad">haven’t</span> done yet</h2>
+    <div class="grid3">
+      <div class="mini"><b>🧬 Consistent characters</b><span>Soul-ID: train a reusable face/character and put the same smurf in every shot.</span></div>
+      <div class="mini"><b>📱 Auto-reframe</b><span>One render → 16:9, 9:16 &amp; 1:1 versions for every platform, automatically.</span></div>
+      <div class="mini"><b>🎙️ Voiceover &amp; dubbing</b><span>TTS narration, voice-change, and multi-language dubbing of the clip.</span></div>
+      <div class="mini"><b>🛍️ Product &amp; marketing</b><span>Product photoshoots &amp; Marketing-Studio ad assets from a single image.</span></div>
+      <div class="mini"><b>⬆️ Upscaling</b><span>Push images &amp; video to 4K with the upscale models before final render.</span></div>
+      <div class="mini"><b>🤖 Auto-keying &amp; edit</b><span>Claude applies Keylight, blend modes &amp; timing — a finished comp, hands-off.</span></div>
+      <div class="mini"><b>🎞️ Premium video models</b><span>Veo 3, Kling 3, Grok for hero shots with real camera motion &amp; sound.</span></div>
+      <div class="mini"><b>📦 Batch / templated</b><span>Feed a list of prompts → a full library of variations, comped automatically.</span></div>
+      <div class="mini"><b>🖼️ Auto-render &amp; deliver</b><span>Claude renders the comp out to MP4 and hands you the finished file.</span></div>
+    </div>
+  </section>
+
+  <!-- 14 WHY IT MATTERS -->
+  <section class="slide">
+    <div class="kicker">Why it matters</div>
+    <h2>The value is the <span class="grad">seamless link</span></h2>
+    <div class="grid2">
+      <div class="mini"><b>⚡ Idea → comp in seconds</b><span>No tab-switching, downloading or importing. You ask; it lands in the timeline.</span></div>
+      <div class="mini"><b>🔄 Iterate at the speed of thought</b><span>“make it greener / make it move / add music” — each is one sentence.</span></div>
+      <div class="mini"><b>🧠 Context-aware</b><span>Claude knows your comp size, layers &amp; format, and matches assets to them.</span></div>
+      <div class="mini"><b>💸 Cost-transparent</b><span>It price-checks before spending, so you stay in control of credits.</span></div>
+    </div>
+    <p class="lead">Higgsfield makes the pixels. After Effects shapes them. Claude makes the two feel like a single tool.</p>
+  </section>
+
+  <!-- 15 CLOSE -->
+  <section class="slide">
+    <div class="kicker"><b>●</b> That’s the pitch</div>
+    <h1>From idea to comp,<br><span class="grad">without leaving the conversation.</span></h1>
+    <p class="lead">Claude × Higgsfield × After Effects — a generative pipeline you drive by just talking.</p>
+    <div style="margin-top:2rem"><span class="pill">↺ Press <span class="key">Home</span> to replay · <span class="key">←</span> / <span class="key">Space</span> to navigate</span></div>
+  </section>
+
+</div>
+
+<div class="hud"><div class="dots" id="dots"></div></div>
+<div class="hint"><span class="key">Space</span> / <span class="key">→</span> next · <span class="key">←</span> back</div>
+<div class="count" id="count"></div>
+
+<script>
+  const slides=[...document.querySelectorAll('.slide')];
+  const dotsWrap=document.getElementById('dots');
+  const prog=document.getElementById('prog');
+  const count=document.getElementById('count');
+  let i=0;
+  slides.forEach((_,n)=>{const b=document.createElement('b');b.onclick=()=>go(n);dotsWrap.appendChild(b);});
+  const dots=[...dotsWrap.children];
+  function go(n){
+    i=Math.max(0,Math.min(slides.length-1,n));
+    slides.forEach((s,k)=>s.classList.toggle('active',k===i));
+    dots.forEach((d,k)=>d.classList.toggle('on',k===i));
+    prog.style.width=((i)/(slides.length-1)*100)+'%';
+    count.textContent=String(i+1).padStart(2,'0')+' / '+String(slides.length).padStart(2,'0');
+    // play any video/audio on the active slide from start (videos only)
+    slides[i].querySelectorAll('video').forEach(v=>{try{v.currentTime=0;v.play();}catch(e){}});
+  }
+  function next(){go(i+1)} function prev(){go(i-1)}
+  window.addEventListener('keydown',e=>{
+    if([' ','ArrowRight','PageDown'].includes(e.key)){e.preventDefault();next();}
+    else if(['ArrowLeft','PageUp'].includes(e.key)){e.preventDefault();prev();}
+    else if(e.key==='Home'){go(0);} else if(e.key==='End'){go(slides.length-1);}
+  },{passive:false});
+  // click right/left half to navigate
+  document.getElementById('deck').addEventListener('click',e=>{
+    if(e.target.closest('audio,video,a,button,.dots')) return;
+    (e.clientX>window.innerWidth*0.5)?next():prev();
+  });
+  go(0);
+</script>
+</body>
+</html>
